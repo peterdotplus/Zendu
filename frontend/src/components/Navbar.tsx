@@ -1,6 +1,11 @@
 "use client";
 import Link from 'next/link';
-import { UserMenu } from './UserMenu';
+import dynamic from 'next/dynamic';
+
+const UserMenu = dynamic(() => import('./UserMenu').then(mod => ({ default: mod.UserMenu })), {
+	ssr: false,
+	loading: () => <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
+});
 
 export function Navbar() {
 	return (

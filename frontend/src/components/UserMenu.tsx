@@ -13,7 +13,7 @@ function getUser(): { displayName?: string; email?: string } | null {
 	}
 }
 
-export function UserMenu() {
+function UserMenu() {
 	const [mounted, setMounted] = useState(false);
 	const [open, setOpen] = useState(false);
 	const [letter, setLetter] = useState<string>('U');
@@ -64,3 +64,5 @@ export function UserMenu() {
 		</div>
 	);
 }
+
+export { UserMenu };
