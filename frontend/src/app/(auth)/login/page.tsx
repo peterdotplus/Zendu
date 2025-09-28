@@ -19,7 +19,20 @@ export default function LoginPage() {
 			localStorage.setItem('token', res.token);
 			window.location.href = '/boards';
 		} catch (e: any) {
-			setError(e?.body?.error || 'Login failed');
+			let errorMessage = 'Login failed';
+			if (e?.body?.error) {
+				if (typeof e.body.error === 'string') {
+					errorMessage = e.body.error;
+				} else if (e.body.error.fieldErrors) {
+					// Handle Zod validation errors
+					const fieldErrors = e.body.error.fieldErrors;
+					const firstError = Object.values(fieldErrors)[0];
+					if (Array.isArray(firstError) && firstError.length > 0) {
+						errorMessage = firstError[0];
+					}
+				}
+			}
+			setError(errorMessage);
 		}
 	}
 
