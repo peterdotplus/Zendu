@@ -9,13 +9,15 @@ export default function RegisterPage() {
 	const [displayName, setDisplayName] = useState('');
 	const [step, setStep] = useState<'register' | 'verify'>('register');
 	const [code, setCode] = useState('');
+	const [verificationCode, setVerificationCode] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
 	async function onRegister(e: React.FormEvent) {
 		e.preventDefault();
 		setError(null);
 		try {
-			await apiFetch(`/auth/register`, { method: 'POST', body: JSON.stringify({ email, password, displayName }) });
+			const res = await apiFetch<{ verificationCode: string }>(`/auth/register`, { method: 'POST', body: JSON.stringify({ email, password, displayName }) });
+			setVerificationCode(res.verificationCode);
 			setStep('verify');
 		} catch (e: any) {
 			setError(e?.body?.error || 'Register failed');
@@ -25,7 +27,8 @@ export default function RegisterPage() {
 	async function onRequestCode() {
 		setError(null);
 		try {
-			await apiFetch(`/auth/request-code`, { method: 'POST', body: JSON.stringify({ email }) });
+			const res = await apiFetch<{ verificationCode: string }>(`/auth/request-code`, { method: 'POST', body: JSON.stringify({ email }) });
+			setVerificationCode(res.verificationCode);
 		} catch (e: any) {
 			setError(e?.body?.error || 'Could not request code');
 		}
@@ -57,6 +60,11 @@ export default function RegisterPage() {
 				<form onSubmit={onVerify} className="space-y-3">
 					<p className="text-sm">Enter the 6-digit code sent to your email.</p>
 					<input className="w-full border rounded px-3 py-2" placeholder="Verification code" value={code} onChange={e => setCode(e.target.value)} />
+					{verificationCode && (
+						<p className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
+							TEMP: will be sent through e-mail. Verification code: <span className="font-mono font-bold">{verificationCode}</span>
+						</p>
+					)}
 					<div className="flex gap-2">
 						<button type="button" onClick={onRequestCode} className="flex-1 border rounded px-3 py-2">Resend</button>
 						<button className="flex-1 bg-black text-white rounded px-3 py-2">Verify</button>
