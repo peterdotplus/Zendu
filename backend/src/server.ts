@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import { authRouter } from './routes/auth';
+import { boardsRouter } from './routes/boards';
+import { requireAuth } from './middleware/auth';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -20,6 +22,7 @@ app.get('/health', async (_req, res) => {
 });
 
 app.use('/auth', authRouter);
+app.use('/boards', requireAuth, boardsRouter);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(PORT, () => {
