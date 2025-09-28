@@ -40,14 +40,16 @@ export default function BoardsPage() {
 				<button className="bg-black text-white rounded px-3 py-2">Create</button>
 			</form>
 			{error && <p className="text-red-600 text-sm">{error}</p>}
-			<ul className="divide-y border rounded">
-				{boards.map(b => (
-					<li key={b.id} className="p-3">
-						<div className="font-medium">{b.title}</div>
-						{b.description && <div className="text-sm text-gray-600">{b.description}</div>}
-					</li>
-				))}
-			</ul>
+			{boards.length > 0 && (
+				<ul className="divide-y border rounded">
+					{boards.map(b => (
+						<li key={b.id} className="p-3">
+							<div className="font-medium">{b.title}</div>
+							{b.description && <div className="text-sm text-gray-600">{b.description}</div>}
+						</li>
+					))}
+				</ul>
+			)}
 		</div>
 	);
 }
