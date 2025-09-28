@@ -1,0 +1,17 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+# Ignore local SQLite database files (keep schema and migrations tracked)
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Common Prisma dev database location
+prisma/dev.db
