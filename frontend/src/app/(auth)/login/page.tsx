@@ -12,11 +12,12 @@ export default function LoginPage() {
 		e.preventDefault();
 		setError(null);
 		try {
-			const res = await apiFetch<{ token: string }>(`/auth/login`, {
+			const res = await apiFetch<{ token: string; user: { email: string; displayName: string } }>(`/auth/login`, {
 				method: 'POST',
 				body: JSON.stringify({ email, password })
 			});
 			localStorage.setItem('token', res.token);
+			localStorage.setItem('user', JSON.stringify(res.user));
 			window.location.href = '/boards';
 		} catch (e: any) {
 			let errorMessage = 'Login failed';
