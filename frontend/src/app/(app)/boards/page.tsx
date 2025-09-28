@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
+import Link from 'next/link';
 
 interface Board { id: string; title: string; description?: string | null }
 
@@ -43,9 +44,11 @@ export default function BoardsPage() {
 			{boards.length > 0 && (
 				<ul className="divide-y border rounded">
 					{boards.map(b => (
-						<li key={b.id} className="p-3">
-							<div className="font-medium">{b.title}</div>
-							{b.description && <div className="text-sm text-gray-600">{b.description}</div>}
+						<li key={b.id} className="p-3 hover:bg-gray-50 cursor-pointer">
+							<Link href={`/boards/${b.id}`} className="block">
+								<div className="font-medium">{b.title}</div>
+								{b.description && <div className="text-sm text-gray-600">{b.description}</div>}
+							</Link>
 						</li>
 					))}
 				</ul>
