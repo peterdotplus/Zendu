@@ -10,3 +10,166 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+// Core models for authentication and collaboration
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  emailVerifiedAt DateTime?
+  passwordHash    String
+  displayName     String
+  avatarUrl       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // JWT: store current token version to invalidate old tokens when needed
+  tokenVersion Int @default(0)
+
+  // Memberships and authored entities
+  memberships   TeamMembership[]
+  boardsCreated Board[]          @relation("BoardsCreated")
+  teamsOwned    Team[]           @relation("TeamsOwned")
+  cardsAssigned CardAssignment[]
+  comments      Comment[]
+
+  // Email verification codes
+  verificationCodes EmailVerificationCode[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Owner (optional; can be null to allow orphan teams until setup)
+  ownerId String?
+  owner   User?   @relation("TeamsOwned", fields: [ownerId], references: [id])
+
+  memberships TeamMembership[]
+  boards      Board[]
+}
+
+model TeamMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      TeamRole @default(MEMBER)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@unique([userId, teamId])
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Board {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Ownership and scope
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  // Creator for auditing
+  creatorId String
+  creator   User   @relation("BoardsCreated", fields: [creatorId], references: [id])
+
+  lists      List[]
+  categories Category[]
+}
+
+model List {
+  id        String   @id @default(cuid())
+  boardId   String
+  title     String
+  position  Int // order within board
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  board Board  @relation(fields: [boardId], references: [id])
+  cards Card[]
+
+  @@unique([boardId, position])
+}
+
+model Card {
+  id          String   @id @default(cuid())
+  listId      String
+  title       String
+  description String   @default("")
+  headerColor String? // hex like #RRGGBB
+  position    Int // order within list
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  list        List             @relation(fields: [listId], references: [id])
+  comments    Comment[]
+  assignments CardAssignment[]
+
+  // Optional category classification per card
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  @@unique([listId, position])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  cardId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  card   Card @relation(fields: [cardId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+}
+
+model Category {
+  id       String @id @default(cuid())
+  boardId  String
+  name     String
+  colorHex String // fixed color for the whole category
+
+  board Board  @relation(fields: [boardId], references: [id])
+  cards Card[]
+
+  // unique per board
+  @@unique([boardId, name])
+}
+
+model CardAssignment {
+  id        String   @id @default(cuid())
+  cardId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  card Card @relation(fields: [cardId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([cardId, userId])
+}
+
+model EmailVerificationCode {
+  id         String    @id @default(cuid())
+  userId     String
+  code       String // 6-digit code as string to keep leading zeros
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  consumedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([code])
+}
