@@ -6,7 +6,7 @@ import { authRouter } from './routes/auth';
 import { boardsRouter } from './routes/boards';
 import { requireAuth } from './middleware/auth';
 
-const app = express();
+export const app = express();
 const prisma = new PrismaClient();
 
 app.use(cors());
@@ -24,7 +24,9 @@ app.get('/health', async (_req, res) => {
 app.use('/auth', authRouter);
 app.use('/boards', requireAuth, boardsRouter);
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
-app.listen(PORT, () => {
-	console.log(`API listening on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+	const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
+	app.listen(PORT, () => {
+		console.log(`API listening on http://localhost:${PORT}`);
+	});
+}
