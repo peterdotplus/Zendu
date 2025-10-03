@@ -23,3 +23,4 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
 		return res.status(401).json({ error: 'Invalid token' });
 	}
 }
+

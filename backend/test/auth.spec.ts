@@ -25,3 +25,4 @@ describe('Auth', () => {
 		expect(typeof login.body.token).toBe('string');
 	});
 });
+

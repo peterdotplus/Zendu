@@ -11,3 +11,4 @@ try {
 	// Fallback: push if no migrations yet
 	execSync('npx prisma db push', { stdio: 'inherit' });
 }
+
