@@ -7,3 +7,5 @@
 - zen view
 
 - Jest frontend
+
+- Project comments categories. For example "Briefing", "Meeting notes", and uncategorized.
