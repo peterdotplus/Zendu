@@ -27,6 +27,6 @@ app.use('/boards', requireAuth, boardsRouter);
 if (require.main === module) {
 	const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 	app.listen(PORT, () => {
-		console.log(`API listening on http://localhost:${PORT}`);
+		console.log(`API listening on http://localhost:${PORT} since [${new Date()}] (${Math.floor(Date.now() / 1000)})`);
 	});
 }
