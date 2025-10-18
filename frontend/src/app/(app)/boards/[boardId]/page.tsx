@@ -108,8 +108,9 @@ export default function BoardViewPage() {
 			{/* Lists and Cards */}
 			<div className="flex gap-4 overflow-x-auto">
 				{board.lists.map(list => (
-					<div key={list.id} className="flex-shrink-0 w-80 bg-gray-100 rounded p-4 space-y-3">
-						<h3 className="font-medium">{list.title}</h3>
+					<div key={list.id} className="flex-shrink-0 w-80 border-[3px] border-black rounded p-4 space-y-3">
+						{(list.title.length <= 14) && <h2 className="text-4xl font-medium truncate w-full" title={list.title}>{list.title}</h2>}
+						{(list.title.length > 14) && <h2 className="text-xl font-medium truncate w-full" title={list.title}>{list.title}</h2>}
 						
 						{/* Create Card Form */}
 						{activeListId === list.id ? (
@@ -144,8 +145,8 @@ export default function BoardViewPage() {
 						{/* Cards */}
 						<div className="space-y-2">
 							{list.cards.map(card => (
-								<div key={card.id} className="bg-white rounded p-3 shadow-sm">
-									<div className="font-medium text-sm">{card.title}</div>
+								<div key={card.id} className="bg-white border-[3px] border-black shadow-[3px_3px_0_black] rounded p-3">
+									<div className="font-medium text-sm" title={card.title}>{card.title}</div>
 									{card.description && <div className="text-xs text-gray-600 mt-1">{card.description}</div>}
 								</div>
 							))}
