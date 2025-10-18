@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useParams } from 'next/navigation';
 
+import AlertBar from '@/components/AlertBar';
+
+
 interface List {
 	id: string;
 	title: string;
@@ -25,6 +28,7 @@ interface Board {
 	lists: List[];
 }
 
+
 export default function BoardViewPage() {
 	const params = useParams();
 	const boardId = params.boardId as string;
@@ -32,6 +36,7 @@ export default function BoardViewPage() {
 	const [board, setBoard] = useState<Board | null>(null);
 	const [newListTitle, setNewListTitle] = useState('');
 	const [newCardTitle, setNewCardTitle] = useState('');
+	const [activeListForm, setActiveListForm] = useState<boolean>(false);
 	const [activeListId, setActiveListId] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
@@ -57,9 +62,10 @@ export default function BoardViewPage() {
 				body: JSON.stringify({ title: newListTitle })
 			});
 			setNewListTitle('');
+			setActiveListForm(false);
 			await loadBoard();
 		} catch (e: any) {
-			setError(e?.body?.error || 'Failed to create list');
+			setError(e?.body?.error?.fieldErrors?.title || 'Failed to create list');
 		}
 	}
 
@@ -77,7 +83,7 @@ export default function BoardViewPage() {
 			setActiveListId(null);
 			await loadBoard();
 		} catch (e: any) {
-			setError(e?.body?.error || 'Failed to create card');
+			setError(e?.body?.error?.fieldErrors?.title || 'Failed to create card');
 		}
 	}
 
@@ -92,42 +98,65 @@ export default function BoardViewPage() {
 				{board.description && <p className="text-gray-600">{board.description}</p>}
 			</div>
 
-			{error && <p className="text-red-600 text-sm">{error}</p>}
+			{error && <AlertBar 
+				message={error} 
+				type="error"
+				showIcon={false}
+				onClose={() => setError(null)}
+			/>}
 
 			{/* Create List Form */}
-			<form onSubmit={createList} className="flex gap-2">
-				<input 
-					className="flex-1 border rounded px-3 py-2" 
-					placeholder="New list title" 
-					value={newListTitle} 
-					onChange={e => setNewListTitle(e.target.value)} 
-				/>
-				<button className="bg-black text-white rounded px-3 py-2">Create List</button>
-			</form>
+			{activeListForm ? (
+				<form onSubmit={createList} className="space-y-2">
+					<input 
+						ref={(input) => input && input.focus()}
+						className="bg-white w-3xs rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]" 
+						placeholder="List title" 
+						value={newListTitle} 
+						onChange={e => setNewListTitle(e.target.value)} 
+					/>
+					<div className="flex gap-1">
+						<button type="submit" className="bg-blue-500 text-white rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]">Add</button>
+						<button 
+							type="button" 
+							onClick={() => setActiveListForm(false)} 
+							className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]"
+						>
+							Cancel
+						</button>
+					</div>
+				</form>
+			) : (
+				<button 
+					onClick={() => setActiveListForm(true)} 
+					className="w-full text-left text-gray-600 hover:text-gray-800 text-sm"
+				>
+					+ Add a list
+				</button>
+			)}
 
 			{/* Lists and Cards */}
 			<div className="flex gap-4 overflow-x-auto">
 				{board.lists.map(list => (
 					<div key={list.id} className="flex-shrink-0 w-80 border-[3px] border-black rounded p-4 space-y-3">
-						{(list.title.length <= 14) && <h2 className="text-4xl font-medium truncate w-full" title={list.title}>{list.title}</h2>}
-						{(list.title.length > 14) && <h2 className="text-xl font-medium truncate w-full" title={list.title}>{list.title}</h2>}
+						<h2 className={`font-medium truncate w-full ${(list.title.length <= 14) ? "text-4xl" : "text-xl"}`} title={list.title}>{list.title}</h2>
 						
 						{/* Create Card Form */}
 						{activeListId === list.id ? (
 							<form onSubmit={(e) => createCard(list.id, e)} className="space-y-2">
 								<input 
 									ref={(input) => input && input.focus()}
-									className="w-full border rounded px-2 py-1 text-sm" 
+									className="bg-white w-full rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]" 
 									placeholder="Card title" 
 									value={newCardTitle} 
 									onChange={e => setNewCardTitle(e.target.value)} 
 								/>
 								<div className="flex gap-1">
-									<button type="submit" className="bg-blue-500 text-white rounded px-2 py-1 text-sm">Add</button>
+									<button type="submit" className="bg-blue-500 text-white rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]">Add</button>
 									<button 
 										type="button" 
 										onClick={() => setActiveListId(null)} 
-										className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm"
+										className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]"
 									>
 										Cancel
 									</button>
