@@ -8,8 +8,10 @@ This is also another experiment with coding with Ai. My main goal is to be able 
 
 ## Stack
 
-Frontend: TypeScript, React.js, Next.js, Tailwind CSS.
+Frontend: TypeScript, React.js, Next.js, Tailwind CSS
 
 Backend: TypeScript, Node.js, Express.js
+
+Testing: Vitest and Jest
 
 Database: SQLite
