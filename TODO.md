@@ -15,3 +15,11 @@
 - CardAssignments, multiple users per card
 
 - Card header color
+
+- Reorder lists
+
+- Drag cards
+
+- Card modal with comments, assignments, description, header color, and CRUD for those.
+
+- Remove Board description from db (and api?)
