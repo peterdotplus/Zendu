@@ -98,6 +98,7 @@ export default function BoardViewPage() {
 				{board.description && <p className="text-gray-600">{board.description}</p>}
 			</div>
 
+			{/* Error AlertBar */}
 			{error && <AlertBar 
 				message={error} 
 				type="error"
@@ -110,17 +111,17 @@ export default function BoardViewPage() {
 				<form onSubmit={createList} className="space-y-2">
 					<input 
 						ref={(input) => input && input.focus()}
-						className="bg-white w-3xs rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]" 
+						className="bg-white w-3xs rounded px-3 py-2 text-sm border-[3px] border-black shadow-[3px_3px_0_black]" 
 						placeholder="List title" 
 						value={newListTitle} 
 						onChange={e => setNewListTitle(e.target.value)} 
 					/>
 					<div className="flex gap-1">
-						<button type="submit" className="bg-blue-500 text-white rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]">Add</button>
+						<button type="submit" className="bg-blue-500 text-white rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black] cursor-pointer">Add</button>
 						<button 
 							type="button" 
 							onClick={() => setActiveListForm(false)} 
-							className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]"
+							className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black] cursor-pointer"
 						>
 							Cancel
 						</button>
@@ -129,7 +130,7 @@ export default function BoardViewPage() {
 			) : (
 				<button 
 					onClick={() => setActiveListForm(true)} 
-					className="w-full text-left text-gray-600 hover:text-gray-800 text-sm"
+					className="text-left text-gray-500 hover:text-gray-900 text-sm cursor-pointer"
 				>
 					+ Add a list
 				</button>
@@ -146,17 +147,17 @@ export default function BoardViewPage() {
 							<form onSubmit={(e) => createCard(list.id, e)} className="space-y-2">
 								<input 
 									ref={(input) => input && input.focus()}
-									className="bg-white w-full rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]" 
+									className="bg-white w-full rounded px-3 py-2 text-sm border-[3px] border-black shadow-[3px_3px_0_black]" 
 									placeholder="Card title" 
 									value={newCardTitle} 
 									onChange={e => setNewCardTitle(e.target.value)} 
 								/>
 								<div className="flex gap-1">
-									<button type="submit" className="bg-blue-500 text-white rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]">Add</button>
+									<button type="submit" className="bg-blue-500 text-white rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black] cursor-pointer">Add</button>
 									<button 
 										type="button" 
 										onClick={() => setActiveListId(null)} 
-										className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black]"
+										className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black] cursor-pointer"
 									>
 										Cancel
 									</button>
@@ -165,7 +166,7 @@ export default function BoardViewPage() {
 						) : (
 							<button 
 								onClick={() => setActiveListId(list.id)} 
-								className="w-full text-left text-gray-600 hover:text-gray-800 text-sm"
+								className="text-left text-gray-500 hover:text-gray-900 text-sm cursor-pointer"
 							>
 								+ Add a card
 							</button>

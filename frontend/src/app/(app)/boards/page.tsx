@@ -3,11 +3,14 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 
+import AlertBar from '@/components/AlertBar';
+
 interface Board { id: string; title: string; description?: string | null }
 
 export default function BoardsPage() {
 	const [boards, setBoards] = useState<Board[]>([]);
 	const [title, setTitle] = useState('');
+	const [activeBoardForm, setActiveBoardForm] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
 	async function load() {
@@ -27,29 +30,65 @@ export default function BoardsPage() {
 		try {
 			await apiFetch<{ board: Board }>(`/boards`, { method: 'POST', body: JSON.stringify({ title }) });
 			setTitle('');
+			setActiveBoardForm(false);
 			await load();
 		} catch (e: any) {
-			setError(e?.body?.error || 'Failed to create');
+			setError(e?.body?.error?.fieldErrors?.title || 'Failed to create');
 		}
 	}
 
 	return (
 		<div className="max-w-2xl mx-auto p-6 space-y-6">
 			<h1 className="text-2xl font-semibold">Boards</h1>
-			<form onSubmit={createBoard} className="flex gap-2">
-				<input className="flex-1 border rounded px-3 py-2" placeholder="New board title" value={title} onChange={e => setTitle(e.target.value)} />
-				<button className="bg-black text-white rounded px-3 py-2">Create</button>
-			</form>
-			{error && <p className="text-red-600 text-sm">{error}</p>}
+
+			{/* Create Board Form */}
+			{activeBoardForm ? (
+				<form onSubmit={createBoard} className="space-y-2">
+					<input 
+						ref={(input) => input && input.focus()}
+						className="bg-white w-full rounded px-3 py-2 text-sm border-[3px] border-black shadow-[3px_3px_0_black]" 
+						placeholder="Board title" 
+						value={title} 
+						onChange={e => setTitle(e.target.value)} 
+					/>
+					<div className="flex gap-1">
+						<button type="submit" className="bg-blue-500 text-white rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black] cursor-pointer">Add</button>
+						<button 
+							type="button" 
+							onClick={() => setActiveBoardForm(false)} 
+							className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm border-[3px] border-black shadow-[3px_3px_0_black] cursor-pointer"
+						>
+							Cancel
+						</button>
+					</div>
+				</form>
+			) : (
+				<button 
+					onClick={() => setActiveBoardForm(true)} 
+					className="text-left text-gray-500 hover:text-gray-900 text-sm cursor-pointer"
+				>
+					+ Add a board
+				</button>
+			)}
+
+			{/* Error AlertBar */}
+			{error && <AlertBar 
+				message={error} 
+				type="error"
+				showIcon={false}
+				onClose={() => setError(null)}
+			/>}
+
+			{/* Board selector */}
 			{boards.length > 0 && (
-				<ul className="divide-y border rounded">
+				<ul className="divide-y">
 					{boards.map(b => (
-						<li key={b.id} className="p-3 hover:bg-gray-50 cursor-pointer">
-							<Link href={`/boards/${b.id}`} className="block">
+						<div key={b.id} className="bg-white text-sm rounded border-black border-[3px] shadow-[3px_3px_0_black] mb-[12px]">
+							<Link href={`/boards/${b.id}`} className="block p-3 hover:bg-gray-200 cursor-pointer">
 								<div className="font-medium">{b.title}</div>
 								{b.description && <div className="text-sm text-gray-600">{b.description}</div>}
 							</Link>
-						</li>
+						</div>
 					))}
 				</ul>
 			)}
