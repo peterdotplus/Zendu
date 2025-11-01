@@ -1,7 +1,5 @@
 # TODO
 
-- implement categories/projects per board
-
 - navigating to the exact url of another user's board, gives them visibility of this.
 
 - zen view
@@ -14,12 +12,8 @@
 
 - CardAssignments, multiple users per card
 
-- Card header color
-
-- Reorder lists
-
 - Drag cards
 
-- Card modal with comments, assignments, description, header color, and CRUD for those.
+- Card modal with comments, assignments, description, and CRUD for those.
 
 - Remove Board description from db (and api?)
