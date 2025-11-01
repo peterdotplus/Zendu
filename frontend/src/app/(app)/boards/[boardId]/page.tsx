@@ -36,8 +36,13 @@ interface Board {
 }
 
 // Inline Card component
-const CardItem = ({ card }: { card: Card }) => (
-  <div className="bg-white border-[3px] border-black shadow-[3px_3px_0_black] rounded p-3">
+const CardItem = ({ card, boardId }: { card: Card; boardId: string }) => (
+  <div
+    className="bg-white border-[3px] border-black shadow-[3px_3px_0_black] rounded p-3 cursor-pointer hover:shadow-[4px_4px_0_black] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+    onClick={() =>
+      (window.location.href = `/boards/${boardId}/cards/${card.id}`)
+    }
+  >
     <div className="font-medium text-sm" title={card.title}>
       {card.title}
     </div>
@@ -465,7 +470,11 @@ export default function BoardViewPage() {
                     <div key={list.id} className={listColumnClasses}>
                       {!collapsedCategories.has("uncategorized") &&
                         uncategorizedCards.map((card) => (
-                          <CardItem key={card.id} card={card} />
+                          <CardItem
+                            key={card.id}
+                            card={card}
+                            boardId={boardId}
+                          />
                         ))}
                     </div>
                   );
@@ -506,7 +515,7 @@ export default function BoardViewPage() {
                   <div key={list.id} className={listColumnClasses}>
                     {!collapsedCategories.has(category.id) &&
                       categoryCards.map((card) => (
-                        <CardItem key={card.id} card={card} />
+                        <CardItem key={card.id} card={card} boardId={boardId} />
                       ))}
                   </div>
                 );
