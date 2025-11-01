@@ -385,29 +385,41 @@ export default function BoardViewPage() {
           ))}
         </div>
 
-        {/* Uncategorized Category Section */}
-        <div className={categorySectionClasses}>
-          {/* Category Title Row */}
-          <div className={categoryTitleClasses}>
-            <div className={`${categoryIndicatorClasses} bg-gray-200`}></div>
-            <span className={categoryNameClasses}>Uncategorized</span>
-          </div>
-          {/* Cards Row */}
-          <div className={cardsRowClasses}>
-            {board.lists.map((list) => {
-              const uncategorizedCards = list.cards.filter(
-                (card) => !card.categoryId,
-              );
-              return (
-                <div key={list.id} className={listColumnClasses}>
-                  {uncategorizedCards.map((card) => (
-                    <CardItem key={card.id} card={card} />
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {/* Uncategorized Category Section - Only show if there are uncategorized cards */}
+        {(() => {
+          const hasUncategorizedCards = board.lists.some((list) =>
+            list.cards.some((card) => !card.categoryId),
+          );
+
+          if (!hasUncategorizedCards) return null;
+
+          return (
+            <div className={categorySectionClasses}>
+              {/* Category Title Row */}
+              <div className={categoryTitleClasses}>
+                <div
+                  className={`${categoryIndicatorClasses} bg-gray-200`}
+                ></div>
+                <span className={categoryNameClasses}>Uncategorized</span>
+              </div>
+              {/* Cards Row */}
+              <div className={cardsRowClasses}>
+                {board.lists.map((list) => {
+                  const uncategorizedCards = list.cards.filter(
+                    (card) => !card.categoryId,
+                  );
+                  return (
+                    <div key={list.id} className={listColumnClasses}>
+                      {uncategorizedCards.map((card) => (
+                        <CardItem key={card.id} card={card} />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Category Sections */}
         {board.categories.map((category) => (
