@@ -296,51 +296,84 @@ export default function BoardViewPage() {
 
       {/* Lists and Cards - Vertical Category Grouping */}
       <div
-        className="flex flex-col gap-6 overflow-x-auto overflow-y-auto"
+        className="flex flex-col gap-6 overflow-x-auto overflow-y-auto relative"
         style={{ maxHeight: "calc(100vh - 200px)" }}
       >
-        {/* List Headers Row */}
-        <div className="flex gap-4 min-w-max">
-          {board.lists.map((list) => (
-            <div key={list.id} className="flex-shrink-0 w-80">
-              <h2
-                className={`font-medium truncate w-full ${list.title.length <= 14 ? "text-4xl" : "text-xl"}`}
-                title={list.title}
-              >
-                {list.title}
-              </h2>
-
-              {/* Create Card Form */}
-              {activeListId === list.id ? (
-                <form
-                  onSubmit={(e) => createCard(list.id, e)}
-                  className="space-y-2 mt-3"
+        {/* List Headers Row - Only show if there are lists */}
+        {board.lists.length > 0 && (
+          <div className="flex gap-4 min-w-max bg-white border-[3px] border-black shadow-[3px_3px_0_black] rounded p-3 sticky top-0 z-10">
+            {board.lists.map((list) => (
+              <div key={list.id} className="flex-shrink-0 w-80">
+                <h2
+                  className={`font-medium truncate w-full ${list.title.length <= 14 ? "text-4xl" : "text-xl"}`}
+                  title={list.title}
                 >
-                  <input
-                    ref={(input) => input && input.focus()}
-                    className={`w-full ${inputBaseClasses}`}
-                    placeholder="Card title"
-                    value={newCardTitle}
-                    onChange={(e) => setNewCardTitle(e.target.value)}
-                  />
+                  {list.title}
+                </h2>
 
-                  {/* Category Selection */}
-                  {board.categories.length > 0 && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        Select Category:
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {board.categories.map((category) => (
+                {/* Create Card Form */}
+                {activeListId === list.id ? (
+                  <form
+                    onSubmit={(e) => createCard(list.id, e)}
+                    className="space-y-2 mt-3"
+                  >
+                    <input
+                      ref={(input) => input && input.focus()}
+                      className={`w-full ${inputBaseClasses}`}
+                      placeholder="Card title"
+                      value={newCardTitle}
+                      onChange={(e) => setNewCardTitle(e.target.value)}
+                    />
+
+                    {/* Category Selection */}
+                    {board.categories.length > 0 && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Select Category:
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {board.categories.map((category) => (
+                            <label
+                              key={category.id}
+                              className="flex items-center space-x-2 cursor-pointer"
+                            >
+                              <input
+                                type="radio"
+                                name="category"
+                                value={category.id}
+                                checked={selectedCategoryId === category.id}
+                                onChange={(e) =>
+                                  setSelectedCategoryId(e.target.value)
+                                }
+                                className="hidden"
+                              />
+                              <div
+                                className={`${radioIndicatorClasses} ${
+                                  selectedCategoryId === category.id
+                                    ? "bg-black"
+                                    : "bg-white"
+                                }`}
+                              ></div>
+                              <div
+                                className={categorySelectionLabelClasses}
+                                style={{
+                                  backgroundColor:
+                                    category.colorHex || "#e5e7eb",
+                                }}
+                              >
+                                {category.name}
+                              </div>
+                            </label>
+                          ))}
                           <label
-                            key={category.id}
+                            key="nocat"
                             className="flex items-center space-x-2 cursor-pointer"
                           >
                             <input
                               type="radio"
                               name="category"
-                              value={category.id}
-                              checked={selectedCategoryId === category.id}
+                              value={"none"}
+                              checked={selectedCategoryId === "none"}
                               onChange={(e) =>
                                 setSelectedCategoryId(e.target.value)
                               }
@@ -348,80 +381,50 @@ export default function BoardViewPage() {
                             />
                             <div
                               className={`${radioIndicatorClasses} ${
-                                selectedCategoryId === category.id
+                                selectedCategoryId === "none"
                                   ? "bg-black"
                                   : "bg-white"
                               }`}
                             ></div>
                             <div
                               className={categorySelectionLabelClasses}
-                              style={{
-                                backgroundColor: category.colorHex || "#e5e7eb",
-                              }}
+                              style={{ backgroundColor: "#e5e7eb" }}
                             >
-                              {category.name}
+                              No category
                             </div>
                           </label>
-                        ))}
-                        <label
-                          key="nocat"
-                          className="flex items-center space-x-2 cursor-pointer"
-                        >
-                          <input
-                            type="radio"
-                            name="category"
-                            value={"none"}
-                            checked={selectedCategoryId === "none"}
-                            onChange={(e) =>
-                              setSelectedCategoryId(e.target.value)
-                            }
-                            className="hidden"
-                          />
-                          <div
-                            className={`${radioIndicatorClasses} ${
-                              selectedCategoryId === "none"
-                                ? "bg-black"
-                                : "bg-white"
-                            }`}
-                          ></div>
-                          <div
-                            className={categorySelectionLabelClasses}
-                            style={{ backgroundColor: "#e5e7eb" }}
-                          >
-                            No category
-                          </div>
-                        </label>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  <div className="flex gap-1">
-                    <button
-                      type="submit"
-                      className={`bg-blue-500 text-white ${buttonBaseClasses}`}
-                    >
-                      Add
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveListId(null)}
-                      className={`bg-gray-300 text-gray-700 ${buttonBaseClasses}`}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <button
-                  onClick={() => setActiveListId(list.id)}
-                  className={`${addButtonClasses} mt-3`}
-                >
-                  + Add a card
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+                    <div className="flex gap-1">
+                      <button
+                        type="submit"
+                        className={`bg-blue-500 text-white ${buttonBaseClasses}`}
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveListId(null)}
+                        className={`bg-gray-300 text-gray-700 ${buttonBaseClasses}`}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setActiveListId(list.id)}
+                    className={`${addButtonClasses} mt-3`}
+                  >
+                    + Add a card
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Uncategorized Category Section - Only show if there are uncategorized cards */}
         {(() => {
