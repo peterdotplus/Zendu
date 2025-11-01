@@ -144,38 +144,43 @@ const reorderListSchema = z.object({
 boardsRouter.patch(
   "/:boardId/lists/reorder",
   async (req: AuthedRequest, res) => {
-    const { boardId } = req.params;
-    const parse = reorderListSchema.safeParse(req.body);
-    if (!parse.success)
-      return res.status(400).json({ error: parse.error.flatten() });
-    const { listId, toPosition } = parse.data;
+    try {
+      const { boardId } = req.params;
+      const parse = reorderListSchema.safeParse(req.body);
+      if (!parse.success)
+        return res.status(400).json({ error: parse.error.flatten() });
+      const { listId, toPosition } = parse.data;
 
-    const list = await prisma.list.findUnique({ where: { id: listId } });
-    if (!list || list.boardId !== boardId)
-      return res.status(404).json({ error: "List not found" });
-    const current = list.position;
-    if (toPosition === current) return res.json({ list });
+      const list = await prisma.list.findUnique({ where: { id: listId } });
+      if (!list || list.boardId !== boardId)
+        return res.status(404).json({ error: "List not found" });
+      const current = list.position;
+      if (toPosition === current) return res.json({ list });
 
-    await prisma.$transaction(async (tx) => {
-      if (toPosition < current) {
-        await tx.list.updateMany({
-          where: { boardId, position: { gte: toPosition, lt: current } },
-          data: { position: { increment: 1 } },
+      await prisma.$transaction(async (tx) => {
+        if (toPosition < current) {
+          await tx.list.updateMany({
+            where: { boardId, position: { gte: toPosition, lt: current } },
+            data: { position: { increment: 1 } },
+          });
+        } else {
+          await tx.list.updateMany({
+            where: { boardId, position: { gt: current, lte: toPosition } },
+            data: { position: { decrement: 1 } },
+          });
+        }
+        await tx.list.update({
+          where: { id: listId },
+          data: { position: toPosition },
         });
-      } else {
-        await tx.list.updateMany({
-          where: { boardId, position: { gt: current, lte: toPosition } },
-          data: { position: { decrement: 1 } },
-        });
-      }
-      await tx.list.update({
-        where: { id: listId },
-        data: { position: toPosition },
       });
-    });
 
-    const updated = await prisma.list.findUnique({ where: { id: listId } });
-    res.json({ list: updated });
+      const updated = await prisma.list.findUnique({ where: { id: listId } });
+      res.json({ list: updated });
+    } catch (error) {
+      console.error("Error reordering list:", error);
+      res.status(500).json({ error: "Failed to reorder list" });
+    }
   },
 );
 
@@ -261,38 +266,66 @@ const reorderCardSchema = z.object({
 boardsRouter.patch(
   "/lists/:listId/cards/reorder",
   async (req: AuthedRequest, res) => {
-    const { listId } = req.params;
-    const parse = reorderCardSchema.safeParse(req.body);
-    if (!parse.success)
-      return res.status(400).json({ error: parse.error.flatten() });
-    const { cardId, toPosition } = parse.data;
+    try {
+      const { listId } = req.params;
+      const parse = reorderCardSchema.safeParse(req.body);
+      if (!parse.success)
+        return res.status(400).json({ error: parse.error.flatten() });
+      const { cardId, toPosition } = parse.data;
 
-    const card = await prisma.card.findUnique({ where: { id: cardId } });
-    if (!card || card.listId !== listId)
-      return res.status(404).json({ error: "Card not found" });
-    const current = card.position;
-    if (toPosition === current) return res.json({ card });
+      const card = await prisma.card.findUnique({ where: { id: cardId } });
+      if (!card || card.listId !== listId)
+        return res.status(404).json({ error: "Card not found" });
+      const current = card.position;
+      if (toPosition === current) return res.json({ card });
 
-    await prisma.$transaction(async (tx) => {
-      if (toPosition < current) {
-        await tx.card.updateMany({
-          where: { listId, position: { gte: toPosition, lt: current } },
-          data: { position: { increment: 1 } },
+      await prisma.$transaction(async (tx) => {
+        // First, move the card to a temporary position outside the range
+        const tempPosition = -1;
+        await tx.card.update({
+          where: { id: cardId },
+          data: { position: tempPosition },
         });
-      } else {
-        await tx.card.updateMany({
-          where: { listId, position: { gt: current, lte: toPosition } },
-          data: { position: { decrement: 1 } },
+
+        if (toPosition < current) {
+          // Moving upward: shift cards down to make space
+          await tx.card.updateMany({
+            where: {
+              listId,
+              position: {
+                gte: toPosition,
+                lt: current,
+              },
+            },
+            data: { position: { increment: 1 } },
+          });
+        } else {
+          // Moving downward: shift cards up to make space
+          await tx.card.updateMany({
+            where: {
+              listId,
+              position: {
+                gt: current,
+                lte: toPosition,
+              },
+            },
+            data: { position: { decrement: 1 } },
+          });
+        }
+
+        // Finally, move the card to its final position
+        await tx.card.update({
+          where: { id: cardId },
+          data: { position: toPosition },
         });
-      }
-      await tx.card.update({
-        where: { id: cardId },
-        data: { position: toPosition },
       });
-    });
 
-    const updated = await prisma.card.findUnique({ where: { id: cardId } });
-    res.json({ card: updated });
+      const updated = await prisma.card.findUnique({ where: { id: cardId } });
+      res.json({ card: updated });
+    } catch (error) {
+      console.error("Error reordering card:", error);
+      res.status(500).json({ error: "Failed to reorder card" });
+    }
   },
 );
 
