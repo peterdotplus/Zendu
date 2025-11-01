@@ -54,7 +54,7 @@ const categorySectionClasses = "flex flex-col gap-2";
 const listColumnClasses = "flex-shrink-0 w-80 space-y-2";
 
 // Cards row wrapper styles
-const cardsRowClasses = "flex gap-4";
+const cardsRowClasses = "flex gap-4 min-w-max";
 
 // Button base styles
 const buttonBaseClasses =
@@ -295,9 +295,12 @@ export default function BoardViewPage() {
       </div>
 
       {/* Lists and Cards - Vertical Category Grouping */}
-      <div className="flex flex-col gap-6">
+      <div
+        className="flex flex-col gap-6 overflow-x-auto overflow-y-auto"
+        style={{ maxHeight: "calc(100vh - 200px)" }}
+      >
         {/* List Headers Row */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 min-w-max">
           {board.lists.map((list) => (
             <div key={list.id} className="flex-shrink-0 w-80">
               <h2
