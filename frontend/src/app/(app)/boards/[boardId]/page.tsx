@@ -48,7 +48,7 @@ const CardItem = ({ card }: { card: Card }) => (
 const categoryTitleClasses = "flex items-center gap-2 px-3 py-2 w-full";
 
 // Category section wrapper styles
-const categorySectionClasses = "flex flex-col gap-2";
+const categorySectionClasses = "flex flex-col gap-2 min-w-max";
 
 // List column wrapper styles
 const listColumnClasses = "flex-shrink-0 w-80 space-y-2";
@@ -70,6 +70,8 @@ const addButtonClasses =
 
 // Category indicator styles
 const categoryIndicatorClasses = "w-16 h-6 rounded-full border-2 border-black";
+const categoryNameButtonClasses =
+  "flex items-center gap-2 cursor-pointer sticky left-3";
 const categoryNameClasses = "text-lg font-medium text-gray-700";
 
 // Category selection label styles
@@ -440,7 +442,7 @@ export default function BoardViewPage() {
               <div className={categoryTitleClasses}>
                 <button
                   onClick={() => toggleCategory("uncategorized")}
-                  className="flex items-center gap-2 cursor-pointer"
+                  className={categoryNameButtonClasses}
                 >
                   <div className="w-4 h-4 flex items-center justify-center">
                     {collapsedCategories.has("uncategorized") ? "▶" : "▼"}
@@ -481,7 +483,7 @@ export default function BoardViewPage() {
             <div className={categoryTitleClasses}>
               <button
                 onClick={() => toggleCategory(category.id)}
-                className="flex items-center gap-2 cursor-pointer"
+                className={categoryNameButtonClasses}
               >
                 <div className="w-4 h-4 flex items-center justify-center">
                   {collapsedCategories.has(category.id) ? "▶" : "▼"}
