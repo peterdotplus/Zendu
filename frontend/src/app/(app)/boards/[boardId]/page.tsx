@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useParams } from "next/navigation";
 
@@ -137,7 +137,7 @@ export default function BoardViewPage() {
     });
   };
 
-  const loadBoard = useCallback(async () => {
+  async function loadBoard() {
     try {
       const data = await apiFetch<{ board: Board }>(`/boards/${boardId}`);
       setBoard(data.board);
@@ -145,11 +145,11 @@ export default function BoardViewPage() {
       const error = e as { body?: { error?: string } };
       setError(error?.body?.error || "Failed to load board");
     }
-  }, [boardId]);
+  }
 
   useEffect(() => {
     loadBoard();
-  }, [loadBoard]);
+  }, [boardId]);
 
   async function createList(e: React.FormEvent) {
     e.preventDefault();

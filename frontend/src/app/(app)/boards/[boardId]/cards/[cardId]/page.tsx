@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useParams, useRouter } from "next/navigation";
 import AlertBar from "@/components/AlertBar";
@@ -23,7 +23,7 @@ interface List {
   id: string;
   title: string;
   position: number;
-  cards?: Card[];
+  cards: Card[];
 }
 
 interface Board {
@@ -52,7 +52,7 @@ export default function CardDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadCardAndBoard = useCallback(async () => {
+  async function loadCardAndBoard() {
     try {
       setIsLoading(true);
       const [cardData, boardData] = await Promise.all([
@@ -68,7 +68,7 @@ export default function CardDetailPage() {
 
       // Find which list contains this card
       const listWithCard = boardData.board.lists.find((list) =>
-        list.cards?.some((card: Card) => card.id === cardId),
+        list.cards?.some((card) => card.id === cardId),
       );
       setSelectedListId(listWithCard?.id || null);
     } catch (e: unknown) {
@@ -77,11 +77,11 @@ export default function CardDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, cardId]);
+  }
 
   useEffect(() => {
     loadCardAndBoard();
-  }, [loadCardAndBoard]);
+  }, [boardId, cardId]);
 
   async function updateCard(e: React.FormEvent) {
     e.preventDefault();
