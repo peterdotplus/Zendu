@@ -69,8 +69,8 @@ const addButtonClasses =
   "text-left text-gray-500 hover:text-gray-900 text-sm cursor-pointer";
 
 // Category indicator styles
-const categoryIndicatorClasses = "w-4 h-4 rounded-full border-2 border-black";
-const categoryNameClasses = "text-sm font-medium text-gray-700";
+const categoryIndicatorClasses = "w-16 h-6 rounded-full border-2 border-black";
+const categoryNameClasses = "text-lg font-medium text-gray-700";
 
 // Category selection label styles
 const categorySelectionLabelClasses =
