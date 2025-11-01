@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useParams } from "next/navigation";
 
@@ -106,6 +106,7 @@ export default function BoardViewPage() {
 
   // Get card count for a category
   const getCardCount = (categoryId: string | null) => {
+    if (!board) return 0;
     return board.lists.reduce((total, list) => {
       if (categoryId === null) {
         return total + list.cards.filter((card) => !card.categoryId).length;
@@ -136,18 +137,19 @@ export default function BoardViewPage() {
     });
   };
 
-  async function loadBoard() {
+  const loadBoard = useCallback(async () => {
     try {
       const data = await apiFetch<{ board: Board }>(`/boards/${boardId}`);
       setBoard(data.board);
-    } catch (e: any) {
-      setError(e?.body?.error || "Failed to load board");
+    } catch (e: unknown) {
+      const error = e as { body?: { error?: string } };
+      setError(error?.body?.error || "Failed to load board");
     }
-  }
+  }, [boardId]);
 
   useEffect(() => {
     loadBoard();
-  }, [boardId]);
+  }, [loadBoard]);
 
   async function createList(e: React.FormEvent) {
     e.preventDefault();
@@ -160,8 +162,13 @@ export default function BoardViewPage() {
       setNewListTitle("");
       setActiveListForm(false);
       await loadBoard();
-    } catch (e: any) {
-      setError(e?.body?.error?.fieldErrors?.title || "Failed to create list");
+    } catch (e: unknown) {
+      const error = e as {
+        body?: { error?: { fieldErrors?: { title?: string[] } } };
+      };
+      setError(
+        error?.body?.error?.fieldErrors?.title?.[0] || "Failed to create list",
+      );
     }
   }
 
@@ -180,9 +187,13 @@ export default function BoardViewPage() {
       setNewCategoryColor("");
       setActiveCategoryForm(false);
       await loadBoard();
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const error = e as {
+        body?: { error?: { fieldErrors?: { title?: string[] } } };
+      };
       setError(
-        e?.body?.error?.fieldErrors?.title || "Failed to create category",
+        error?.body?.error?.fieldErrors?.title?.[0] ||
+          "Failed to create category",
       );
     }
   }
@@ -191,7 +202,9 @@ export default function BoardViewPage() {
     e.preventDefault();
     setError(null);
     try {
-      let apiData = { title: newCardTitle };
+      const apiData: { title: string; categoryId?: string } = {
+        title: newCardTitle,
+      };
       if (selectedCategoryId !== "none")
         apiData.categoryId = selectedCategoryId;
       await apiFetch(`/boards/lists/${listId}/cards`, {
@@ -202,8 +215,13 @@ export default function BoardViewPage() {
       setActiveListId(null);
       setSelectedCategoryId("none");
       await loadBoard();
-    } catch (e: any) {
-      setError(e?.body?.error?.fieldErrors?.title || "Failed to create card");
+    } catch (e: unknown) {
+      const error = e as {
+        body?: { error?: { fieldErrors?: { title?: string[] } } };
+      };
+      setError(
+        error?.body?.error?.fieldErrors?.title?.[0] || "Failed to create card",
+      );
     }
   }
 
@@ -230,7 +248,9 @@ export default function BoardViewPage() {
         {activeListForm ? (
           <form onSubmit={createList} className="space-y-2">
             <input
-              ref={(input) => input && input.focus()}
+              ref={(input) => {
+                if (input) input.focus();
+              }}
               className={`w-3xs ${inputBaseClasses}`}
               placeholder="List title"
               value={newListTitle}
@@ -265,7 +285,9 @@ export default function BoardViewPage() {
         {activeCategoryForm ? (
           <form onSubmit={createCategory} className="space-y-2">
             <input
-              ref={(input) => input && input.focus()}
+              ref={(input) => {
+                if (input) input.focus();
+              }}
               className={`w-3xs ${inputBaseClasses}`}
               placeholder="Category name"
               value={newCategoryName}
@@ -325,7 +347,9 @@ export default function BoardViewPage() {
                     className="space-y-2 mt-3"
                   >
                     <input
-                      ref={(input) => input && input.focus()}
+                      ref={(input) => {
+                        if (input) input.focus();
+                      }}
                       className={`w-full ${inputBaseClasses}`}
                       placeholder="Card title"
                       value={newCardTitle}

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useParams, useRouter } from "next/navigation";
 import AlertBar from "@/components/AlertBar";
@@ -23,6 +23,7 @@ interface List {
   id: string;
   title: string;
   position: number;
+  cards?: Card[];
 }
 
 interface Board {
@@ -51,7 +52,7 @@ export default function CardDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  async function loadCardAndBoard() {
+  const loadCardAndBoard = useCallback(async () => {
     try {
       setIsLoading(true);
       const [cardData, boardData] = await Promise.all([
@@ -67,19 +68,20 @@ export default function CardDetailPage() {
 
       // Find which list contains this card
       const listWithCard = boardData.board.lists.find((list) =>
-        list.cards?.some((card) => card.id === cardId),
+        list.cards?.some((card: Card) => card.id === cardId),
       );
       setSelectedListId(listWithCard?.id || null);
-    } catch (e: any) {
-      setError(e?.body?.error || "Failed to load card");
+    } catch (e: unknown) {
+      const error = e as { body?: { error?: string } };
+      setError(error?.body?.error || "Failed to load card");
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [boardId, cardId]);
 
   useEffect(() => {
     loadCardAndBoard();
-  }, [boardId, cardId]);
+  }, [loadCardAndBoard]);
 
   async function updateCard(e: React.FormEvent) {
     e.preventDefault();
@@ -97,8 +99,9 @@ export default function CardDetailPage() {
 
       setIsEditing(false);
       await loadCardAndBoard(); // Refresh data
-    } catch (e: any) {
-      setError(e?.body?.error || "Failed to update card");
+    } catch (e: unknown) {
+      const error = e as { body?: { error?: string } };
+      setError(error?.body?.error || "Failed to update card");
     }
   }
 
@@ -113,11 +116,14 @@ export default function CardDetailPage() {
 
       setSelectedListId(listId);
       await loadCardAndBoard(); // Refresh data
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const error = e as {
+        body?: { error?: { fieldErrors?: { toListId?: string[] } } };
+      };
       setError(
-        e?.body?.error?.fieldErrors?.toListId?.[0] ||
-          e?.body?.error ||
-          "Failed to move card",
+        (error?.body?.error?.fieldErrors?.toListId?.[0] ||
+          error?.body?.error ||
+          "Failed to move card") as string,
       );
     }
   }
@@ -133,8 +139,9 @@ export default function CardDetailPage() {
       });
 
       router.push(`/boards/${boardId}`);
-    } catch (e: any) {
-      setError(e?.body?.error || "Failed to delete card");
+    } catch (e: unknown) {
+      const error = e as { body?: { error?: string } };
+      setError(error?.body?.error || "Failed to delete card");
     }
   }
 
