@@ -229,7 +229,7 @@ export default function BoardViewPage() {
               value={newListTitle}
               onChange={(e) => setNewListTitle(e.target.value)}
             />
-            <div className="flex gap-1">
+            <div className="flex gap-1 justify-end">
               <button
                 type="submit"
                 className={`bg-blue-500 text-white ${buttonBaseClasses}`}
@@ -268,7 +268,7 @@ export default function BoardViewPage() {
               type="color"
               onChange={(e) => setNewCategoryColor(e.target.value)}
             />
-            <div className="flex gap-1">
+            <div className="flex gap-1 justify-end">
               <button
                 type="submit"
                 className={`bg-blue-500 text-white ${buttonBaseClasses}`}
@@ -397,7 +397,7 @@ export default function BoardViewPage() {
                       </div>
                     )}
 
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 justify-end">
                       <button
                         type="submit"
                         className={`bg-blue-500 text-white ${buttonBaseClasses}`}
