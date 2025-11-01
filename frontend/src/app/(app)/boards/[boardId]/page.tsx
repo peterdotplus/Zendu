@@ -97,6 +97,25 @@ export default function BoardViewPage() {
     new Set(),
   );
 
+  // Get card count for a category
+  const getCardCount = (categoryId: string | null) => {
+    return board.lists.reduce((total, list) => {
+      if (categoryId === null) {
+        return total + list.cards.filter((card) => !card.categoryId).length;
+      } else {
+        return (
+          total +
+          list.cards.filter((card) => card.categoryId === categoryId).length
+        );
+      }
+    }, 0);
+  };
+
+  // Format card count with proper pluralization
+  const formatCardCount = (count: number) => {
+    return `${count} card${count !== 1 ? "s" : ""}`;
+  };
+
   // Toggle category collapse
   const toggleCategory = (categoryId: string) => {
     setCollapsedCategories((prev) => {
@@ -423,7 +442,9 @@ export default function BoardViewPage() {
                   <div
                     className={`${categoryIndicatorClasses} bg-gray-200`}
                   ></div>
-                  <span className={categoryNameClasses}>Uncategorized</span>
+                  <span className={categoryNameClasses}>
+                    Uncategorized ({formatCardCount(getCardCount(null))})
+                  </span>
                 </button>
               </div>
               {/* Cards Row */}
@@ -463,7 +484,9 @@ export default function BoardViewPage() {
                   className={categoryIndicatorClasses}
                   style={{ backgroundColor: category.colorHex }}
                 ></div>
-                <span className={categoryNameClasses}>{category.name}</span>
+                <span className={categoryNameClasses}>
+                  {category.name} ({formatCardCount(getCardCount(category.id))})
+                </span>
               </button>
             </div>
             {/* Cards Row */}
