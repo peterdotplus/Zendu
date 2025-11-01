@@ -456,22 +456,21 @@ export default function BoardViewPage() {
                 </button>
               </div>
               {/* Cards Row */}
-              {!collapsedCategories.has("uncategorized") && (
-                <div className={cardsRowClasses}>
-                  {board.lists.map((list) => {
-                    const uncategorizedCards = list.cards.filter(
-                      (card) => !card.categoryId,
-                    );
-                    return (
-                      <div key={list.id} className={listColumnClasses}>
-                        {uncategorizedCards.map((card) => (
+              <div className={cardsRowClasses}>
+                {board.lists.map((list) => {
+                  const uncategorizedCards = list.cards.filter(
+                    (card) => !card.categoryId,
+                  );
+                  return (
+                    <div key={list.id} className={listColumnClasses}>
+                      {!collapsedCategories.has("uncategorized") &&
+                        uncategorizedCards.map((card) => (
                           <CardItem key={card.id} card={card} />
                         ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })()}
@@ -498,22 +497,21 @@ export default function BoardViewPage() {
               </button>
             </div>
             {/* Cards Row */}
-            {!collapsedCategories.has(category.id) && (
-              <div className={cardsRowClasses}>
-                {board.lists.map((list) => {
-                  const categoryCards = list.cards.filter(
-                    (card) => card.categoryId === category.id,
-                  );
-                  return (
-                    <div key={list.id} className={listColumnClasses}>
-                      {categoryCards.map((card) => (
+            <div className={cardsRowClasses}>
+              {board.lists.map((list) => {
+                const categoryCards = list.cards.filter(
+                  (card) => card.categoryId === category.id,
+                );
+                return (
+                  <div key={list.id} className={listColumnClasses}>
+                    {!collapsedCategories.has(category.id) &&
+                      categoryCards.map((card) => (
                         <CardItem key={card.id} card={card} />
                       ))}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>
