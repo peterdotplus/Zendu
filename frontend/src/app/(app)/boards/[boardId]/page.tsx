@@ -93,6 +93,22 @@ export default function BoardViewPage() {
   const [activeCategoryForm, setActiveCategoryForm] = useState<boolean>(false);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // Toggle category collapse
+  const toggleCategory = (categoryId: string) => {
+    setCollapsedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
 
   async function loadBoard() {
     try {
@@ -397,26 +413,36 @@ export default function BoardViewPage() {
             <div className={categorySectionClasses}>
               {/* Category Title Row */}
               <div className={categoryTitleClasses}>
-                <div
-                  className={`${categoryIndicatorClasses} bg-gray-200`}
-                ></div>
-                <span className={categoryNameClasses}>Uncategorized</span>
+                <button
+                  onClick={() => toggleCategory("uncategorized")}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    {collapsedCategories.has("uncategorized") ? "▶" : "▼"}
+                  </div>
+                  <div
+                    className={`${categoryIndicatorClasses} bg-gray-200`}
+                  ></div>
+                  <span className={categoryNameClasses}>Uncategorized</span>
+                </button>
               </div>
               {/* Cards Row */}
-              <div className={cardsRowClasses}>
-                {board.lists.map((list) => {
-                  const uncategorizedCards = list.cards.filter(
-                    (card) => !card.categoryId,
-                  );
-                  return (
-                    <div key={list.id} className={listColumnClasses}>
-                      {uncategorizedCards.map((card) => (
-                        <CardItem key={card.id} card={card} />
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
+              {!collapsedCategories.has("uncategorized") && (
+                <div className={cardsRowClasses}>
+                  {board.lists.map((list) => {
+                    const uncategorizedCards = list.cards.filter(
+                      (card) => !card.categoryId,
+                    );
+                    return (
+                      <div key={list.id} className={listColumnClasses}>
+                        {uncategorizedCards.map((card) => (
+                          <CardItem key={card.id} card={card} />
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })()}
@@ -426,27 +452,37 @@ export default function BoardViewPage() {
           <div key={category.id} className={categorySectionClasses}>
             {/* Category Title Row */}
             <div className={categoryTitleClasses}>
-              <div
-                className={categoryIndicatorClasses}
-                style={{ backgroundColor: category.colorHex }}
-              ></div>
-              <span className={categoryNameClasses}>{category.name}</span>
+              <button
+                onClick={() => toggleCategory(category.id)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <div className="w-4 h-4 flex items-center justify-center">
+                  {collapsedCategories.has(category.id) ? "▶" : "▼"}
+                </div>
+                <div
+                  className={categoryIndicatorClasses}
+                  style={{ backgroundColor: category.colorHex }}
+                ></div>
+                <span className={categoryNameClasses}>{category.name}</span>
+              </button>
             </div>
             {/* Cards Row */}
-            <div className={cardsRowClasses}>
-              {board.lists.map((list) => {
-                const categoryCards = list.cards.filter(
-                  (card) => card.categoryId === category.id,
-                );
-                return (
-                  <div key={list.id} className={listColumnClasses}>
-                    {categoryCards.map((card) => (
-                      <CardItem key={card.id} card={card} />
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
+            {!collapsedCategories.has(category.id) && (
+              <div className={cardsRowClasses}>
+                {board.lists.map((list) => {
+                  const categoryCards = list.cards.filter(
+                    (card) => card.categoryId === category.id,
+                  );
+                  return (
+                    <div key={list.id} className={listColumnClasses}>
+                      {categoryCards.map((card) => (
+                        <CardItem key={card.id} card={card} />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ))}
       </div>
