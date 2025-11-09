@@ -15,5 +15,3 @@
 - Drag cards
 
 - Card modal with comments, assignments, description, and CRUD for those.
-
-- Remove Board description from db (and api?)
