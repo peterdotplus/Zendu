@@ -6,7 +6,7 @@
 
 - Project comments categories. For example "Briefing", "Meeting notes", and uncategorized.
 
-- After registering, input the email into the login field, and autofocus the password (but don't autofill)
+- After registering, input the email into the login field, and autofocus the password (but don't autofill), also autofocus on verify page
 
 - Drag cards
 
