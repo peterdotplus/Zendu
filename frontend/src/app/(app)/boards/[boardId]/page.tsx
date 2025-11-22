@@ -97,16 +97,16 @@ const DropZone = ({
                 ? "h-[280px] bg-blue-100 border-2 border-blue-500 rounded flex items-center justify-center"
                 : "h-[350px] bg-blue-100 border-2 border-blue-500 rounded flex items-center justify-center"
         : isEmptyList
-          ? "h-full min-h-[200px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400 flex items-center justify-center"
+          ? "h-full min-h-[200px] bg-gray-200 opacity-0 flex items-center justify-center"
           : availableSpace === 1
-            ? "h-2 bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+            ? "h-2 bg-gray-200 opacity-0"
             : availableSpace === 2
-              ? "h-[70px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+              ? "h-[70px] bg-gray-200 opacity-0"
               : availableSpace === 3
-                ? "h-[140px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+                ? "h-[140px] bg-gray-200 opacity-0"
                 : availableSpace === 4
-                  ? "h-[210px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
-                  : "h-[280px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+                  ? "h-[210px] bg-gray-200 opacity-0"
+                  : "h-[280px] bg-gray-200 opacity-0"
     } ${
       draggedCard &&
       getCategoryForListAndPosition(listId, position, categorySection) !==
@@ -455,7 +455,10 @@ export default function BoardViewPage() {
         }
       } catch (error) {
         // Extract detailed error information
-        const apiError = error as any;
+        const apiError = error as {
+          body?: { error?: string };
+          message?: string;
+        };
         if (apiError?.body?.error) {
           throw new Error(`Move failed: ${apiError.body.error}`);
         } else if (apiError?.message) {
@@ -859,7 +862,7 @@ export default function BoardViewPage() {
                                 : 1
                             }
                           />
-                          {uncategorizedCards.map((card, index) => (
+                          {uncategorizedCards.map((card) => (
                             <div key={card.id}>
                               <div
                                 draggable
@@ -977,7 +980,7 @@ export default function BoardViewPage() {
                               : 1
                           }
                         />
-                        {categoryCards.map((card, index) => (
+                        {categoryCards.map((card) => (
                           <div key={card.id}>
                             <div
                               draggable
