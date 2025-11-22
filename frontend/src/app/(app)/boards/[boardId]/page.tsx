@@ -262,7 +262,7 @@ export default function BoardViewPage() {
         method: "POST",
         body: JSON.stringify({
           name: newCategoryName,
-          colorHex: newCategoryColor,
+          colorHex: newCategoryColor || "#000000",
         }),
       });
       setNewCategoryName("");
@@ -503,19 +503,42 @@ export default function BoardViewPage() {
       {activeCategoryForm && (
         <div className="mb-[30px] flex justify-end">
           <form onSubmit={createCategory} className="space-y-2">
-            <input
-              ref={(input) => {
-                if (input) input.focus();
-              }}
-              className={`w-3xs ${inputBaseClasses}`}
-              placeholder="Category name"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-            />
-            <input
-              type="color"
-              onChange={(e) => setNewCategoryColor(e.target.value)}
-            />
+            <div className="flex gap-2 items-center">
+              <input
+                ref={(input) => {
+                  if (input) input.focus();
+                }}
+                className={`w-3xs ${inputBaseClasses}`}
+                placeholder="Category name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+              />
+              <div className="relative inline-flex items-center bg-white rounded px-3 py-2 text-sm border-[3px] border-black shadow-[3px_3px_0_black] cursor-pointer">
+                <div
+                  className="w-4 h-4 rounded border border-gray-300 mr-2"
+                  style={{ backgroundColor: newCategoryColor || "#000000" }}
+                />
+                <input
+                  type="color"
+                  value={newCategoryColor || "#000000"}
+                  onChange={(e) => setNewCategoryColor(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <svg
+                  className="w-4 h-4 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
             <div className="flex gap-1 justify-end">
               <button
                 type="submit"
