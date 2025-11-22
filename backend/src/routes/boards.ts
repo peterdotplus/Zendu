@@ -280,40 +280,52 @@ boardsRouter.patch(
       if (toPosition === current) return res.json({ card });
 
       await prisma.$transaction(async (tx) => {
-        // First, move the card to a temporary position outside the range
-        const tempPosition = -1;
+        // Use temporary position to avoid conflicts
+        const tempPosition = -999999;
         await tx.card.update({
           where: { id: cardId },
           data: { position: tempPosition },
         });
 
         if (toPosition < current) {
-          // Moving upward: shift cards down to make space
-          await tx.card.updateMany({
+          // Moving up - increment positions between toPosition and current-1
+          // Update cards one by one to avoid constraint violations
+          const cardsToUpdate = await tx.card.findMany({
             where: {
               listId,
-              position: {
-                gte: toPosition,
-                lt: current,
-              },
+              position: { gte: toPosition, lt: current },
+              id: { not: cardId },
             },
-            data: { position: { increment: 1 } },
+            orderBy: { position: "desc" }, // Update from highest to lowest
           });
+
+          for (const cardToUpdate of cardsToUpdate) {
+            await tx.card.update({
+              where: { id: cardToUpdate.id },
+              data: { position: cardToUpdate.position + 1 },
+            });
+          }
         } else {
-          // Moving downward: shift cards up to make space
-          await tx.card.updateMany({
+          // Moving down - decrement positions between current+1 and toPosition
+          // Update cards one by one to avoid constraint violations
+          const cardsToUpdate = await tx.card.findMany({
             where: {
               listId,
-              position: {
-                gt: current,
-                lte: toPosition,
-              },
+              position: { gt: current, lte: toPosition },
+              id: { not: cardId },
             },
-            data: { position: { decrement: 1 } },
+            orderBy: { position: "asc" }, // Update from lowest to highest
           });
+
+          for (const cardToUpdate of cardsToUpdate) {
+            await tx.card.update({
+              where: { id: cardToUpdate.id },
+              data: { position: cardToUpdate.position - 1 },
+            });
+          }
         }
 
-        // Finally, move the card to its final position
+        // Move card to final position
         await tx.card.update({
           where: { id: cardId },
           data: { position: toPosition },
@@ -570,13 +582,7 @@ boardsRouter.post(
 
       try {
         await prisma.$transaction(async (tx) => {
-          // First, move the card to position 0 temporarily to avoid conflicts
-          await tx.card.update({
-            where: { id: cardId },
-            data: { listId: toListId, position: 0 },
-          });
-
-          // Close gap in source list
+          // First, close gap in source list
           await tx.card.updateMany({
             where: { listId: fromListId, position: { gt: card.position } },
             data: { position: { decrement: 1 } },
@@ -589,10 +595,10 @@ boardsRouter.post(
           });
           const destPos = (max._max.position ?? 0) + 1;
 
-          // Move the card to final position
+          // Move the card directly to final position
           await tx.card.update({
             where: { id: cardId },
-            data: { position: destPos },
+            data: { listId: toListId, position: destPos },
           });
         });
 
@@ -606,6 +612,188 @@ boardsRouter.post(
         } else {
           res.status(400).json({ error: "Database transaction failed" });
         }
+      }
+    } catch (e) {
+      if (e instanceof Error) {
+        res.status(400).json({ error: `Failed to move card: ${e.message}` });
+      } else {
+        res.status(400).json({ error: "Failed to move card" });
+      }
+    }
+  },
+);
+
+// Move card to list with specific position
+boardsRouter.post(
+  "/:boardId/cards/:cardId/move-and-reorder",
+  async (req: AuthedRequest, res) => {
+    const { boardId, cardId } = req.params;
+    const parse = z
+      .object({
+        toListId: z.string(),
+        toPosition: z.number().int().positive(),
+      })
+      .safeParse(req.body);
+    if (!parse.success)
+      return res.status(400).json({ error: parse.error.flatten() });
+    const { toListId, toPosition } = parse.data;
+
+    try {
+      // Verify card belongs to board
+      const card = await prisma.card.findUnique({
+        where: { id: cardId },
+        include: {
+          list: {
+            select: { boardId: true },
+          },
+        },
+      });
+
+      if (!card) {
+        return res.status(404).json({ error: "Card not found" });
+      }
+
+      if (card.list.boardId !== boardId) {
+        return res.status(404).json({ error: "Card not found in this board" });
+      }
+
+      // Verify target list belongs to board
+      const targetList = await prisma.list.findUnique({
+        where: { id: toListId },
+        select: { boardId: true },
+      });
+
+      if (!targetList) {
+        return res.status(400).json({ error: "Target list not found" });
+      }
+
+      if (targetList.boardId !== boardId) {
+        return res
+          .status(400)
+          .json({ error: "Target list not found in this board" });
+      }
+
+      const fromListId = card.listId;
+
+      // If moving to the same list, use regular reorder
+      if (fromListId === toListId) {
+        // Use existing reorder logic for same list
+        await prisma.$transaction(async (tx) => {
+          const current = card.position;
+          if (toPosition === current) return;
+
+          // Use temporary position to avoid conflicts
+          const tempPosition = -999999;
+          await tx.card.update({
+            where: { id: cardId },
+            data: { position: tempPosition },
+          });
+
+          if (toPosition < current) {
+            // Moving up - increment positions between toPosition and current-1
+            // Update cards one by one to avoid constraint violations
+            const cardsToUpdate = await tx.card.findMany({
+              where: {
+                listId: fromListId,
+                position: { gte: toPosition, lt: current },
+                id: { not: cardId },
+              },
+              orderBy: { position: "desc" }, // Update from highest to lowest
+            });
+
+            for (const cardToUpdate of cardsToUpdate) {
+              await tx.card.update({
+                where: { id: cardToUpdate.id },
+                data: { position: cardToUpdate.position + 1 },
+              });
+            }
+          } else {
+            // Moving down - decrement positions between current+1 and toPosition
+            // Update cards one by one to avoid constraint violations
+            const cardsToUpdate = await tx.card.findMany({
+              where: {
+                listId: fromListId,
+                position: { gt: current, lte: toPosition },
+                id: { not: cardId },
+              },
+              orderBy: { position: "asc" }, // Update from lowest to highest
+            });
+
+            for (const cardToUpdate of cardsToUpdate) {
+              await tx.card.update({
+                where: { id: cardToUpdate.id },
+                data: { position: cardToUpdate.position - 1 },
+              });
+            }
+          }
+
+          // Move card to final position
+
+          await tx.card.update({
+            where: { id: cardId },
+            data: { position: toPosition },
+          });
+        });
+
+        const updated = await prisma.card.findUnique({ where: { id: cardId } });
+        if (!updated) {
+          throw new Error("Card not found after move");
+        }
+        res.json({ card: updated });
+      } else {
+        // Moving to different list - use individual updates with proper ordering
+        await prisma.$transaction(async (tx) => {
+          const currentPosition = card.position;
+
+          // Step 1: Move card to temporary position in target list
+          const tempPosition = -999999;
+          await tx.card.update({
+            where: { id: cardId },
+            data: {
+              listId: toListId,
+              position: tempPosition,
+            },
+          });
+
+          // Step 2: Close gap in source list
+          await tx.card.updateMany({
+            where: {
+              listId: fromListId,
+              position: { gt: currentPosition },
+            },
+            data: { position: { decrement: 1 } },
+          });
+
+          // Step 3: Make space in target list for the new card
+          // Update cards one by one to avoid constraint violations
+          const targetCards = await tx.card.findMany({
+            where: {
+              listId: toListId,
+              position: { gte: toPosition },
+              id: { not: cardId },
+            },
+            orderBy: { position: "desc" }, // Update from highest to lowest
+          });
+
+          for (const targetCard of targetCards) {
+            await tx.card.update({
+              where: { id: targetCard.id },
+              data: { position: targetCard.position + 1 },
+            });
+          }
+
+          // Step 4: Move card to final position
+          await tx.card.update({
+            where: { id: cardId },
+            data: { position: toPosition },
+          });
+        });
+
+        const updated = await prisma.card.findUnique({ where: { id: cardId } });
+        if (!updated) {
+          throw new Error("Card not found after move");
+        }
+        res.json({ card: updated });
       }
     } catch (e) {
       if (e instanceof Error) {

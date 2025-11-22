@@ -57,10 +57,11 @@ const DropZone = ({
   onDragOver,
   onDrop,
   draggedCard,
-  draggedCardListId,
   draggedCardCategoryId,
   getCategoryForListAndPosition,
   categorySection,
+  isEmptyList = false,
+  availableSpace = 1,
 }: {
   listId: string;
   position: number;
@@ -73,7 +74,6 @@ const DropZone = ({
     categorySection?: string,
   ) => void;
   draggedCard: Card | null;
-  draggedCardListId: string | null;
   draggedCardCategoryId: string | null;
   getCategoryForListAndPosition: (
     listId: string,
@@ -81,15 +81,34 @@ const DropZone = ({
     categorySection?: string,
   ) => string;
   categorySection?: string;
+  isEmptyList?: boolean;
+  availableSpace?: number;
 }) => (
   <div
     className={`transition-all ${
       isActive
-        ? "h-[70px] bg-blue-100 border-2 border-blue-500 rounded flex items-center justify-center"
-        : "h-2 bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+        ? availableSpace === 1
+          ? "h-[70px] bg-blue-100 border-2 border-blue-500 rounded flex items-center justify-center"
+          : availableSpace === 2
+            ? "h-[140px] bg-blue-100 border-2 border-blue-500 rounded flex items-center justify-center"
+            : availableSpace === 3
+              ? "h-[210px] bg-blue-100 border-2 border-blue-500 rounded flex items-center justify-center"
+              : availableSpace === 4
+                ? "h-[280px] bg-blue-100 border-2 border-blue-500 rounded flex items-center justify-center"
+                : "h-[350px] bg-blue-100 border-2 border-blue-500 rounded flex items-center justify-center"
+        : isEmptyList
+          ? "h-full min-h-[200px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400 flex items-center justify-center"
+          : availableSpace === 1
+            ? "h-2 bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+            : availableSpace === 2
+              ? "h-[70px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+              : availableSpace === 3
+                ? "h-[140px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+                : availableSpace === 4
+                  ? "h-[210px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
+                  : "h-[280px] bg-gray-200 opacity-0 hover:opacity-100 hover:bg-gray-400"
     } ${
       draggedCard &&
-      draggedCardListId === listId &&
       getCategoryForListAndPosition(listId, position, categorySection) !==
         draggedCardCategoryId
         ? "cursor-not-allowed opacity-30"
@@ -113,6 +132,12 @@ const DropZone = ({
         draggedCardCategoryId
           ? "Cannot drop in different category"
           : "Drop here to insert"}
+      </div>
+    )}
+
+    {isEmptyList && !isActive && (
+      <div className="text-sm text-gray-500 opacity-0 hover:opacity-100 transition-opacity">
+        Drop cards here
       </div>
     )}
   </div>
@@ -175,16 +200,19 @@ export default function BoardViewPage() {
 
   // Drag & drop state
   const [draggedCard, setDraggedCard] = useState<Card | null>(null);
-  const [activeDropZone, setActiveDropZone] = useState<{
-    listId: string;
-    position: number;
-  } | null>(null);
   const [draggedCardListId, setDraggedCardListId] = useState<string | null>(
     null,
   );
   const [draggedCardCategoryId, setDraggedCardCategoryId] = useState<
     string | null
   >(null);
+  const [maxListSizePerCategory, setMaxListSizePerCategory] = useState<
+    Map<string, number>
+  >(new Map());
+  const [activeDropZone, setActiveDropZone] = useState<{
+    listId: string;
+    position: number;
+  } | null>(null);
 
   // Get card count for a category
   const getCardCount = (categoryId: string | null) => {
@@ -316,6 +344,38 @@ export default function BoardViewPage() {
     setDraggedCard(card);
     setDraggedCardListId(listId);
     setDraggedCardCategoryId(card.categoryId || "uncategorized");
+
+    // Calculate maximum list size per category for visual comparison
+    if (board) {
+      const categoryMaxSizes = new Map<string, number>();
+
+      // Calculate max size for uncategorized cards
+      const uncategorizedMax = Math.max(
+        ...board.lists.map(
+          (list) => list.cards.filter((card) => !card.categoryId).length,
+        ),
+      );
+      if (uncategorizedMax > 0) {
+        categoryMaxSizes.set("uncategorized", uncategorizedMax);
+      }
+
+      // Calculate max size for each category
+      board.categories.forEach((category) => {
+        const categoryMax = Math.max(
+          ...board.lists.map(
+            (list) =>
+              list.cards.filter((card) => card.categoryId === category.id)
+                .length,
+          ),
+        );
+        if (categoryMax > 0) {
+          categoryMaxSizes.set(category.id, categoryMax);
+        }
+      });
+
+      setMaxListSizePerCategory(categoryMaxSizes);
+    }
+
     e.dataTransfer.setData("text/plain", card.id);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -346,13 +406,7 @@ export default function BoardViewPage() {
     }
 
     try {
-      // Only allow reordering within the same list and same category
-      if (draggedCardListId !== listId) {
-        setDraggedCard(null);
-        setDraggedCardListId(null);
-        setDraggedCardCategoryId(null);
-        return;
-      }
+      // Allow reordering within the same category, even across different lists
 
       // Check if we're trying to drop in a different category
       const targetCategoryId = getCategoryForListAndPosition(
@@ -360,34 +414,62 @@ export default function BoardViewPage() {
         position,
         categorySection,
       );
-      if (draggedCardCategoryId !== targetCategoryId) {
+
+      // Allow dropping on empty lists regardless of category
+      const list = board?.lists.find((l) => l.id === listId);
+      const isListEmpty = list && list.cards.length === 0;
+
+      if (draggedCardCategoryId !== targetCategoryId && !isListEmpty) {
         setDraggedCard(null);
         setDraggedCardListId(null);
         setDraggedCardCategoryId(null);
         return;
       }
 
-      // Reorder the card within the same list
-
+      // Move card to target list and position
       try {
-        await apiFetch(`/boards/lists/${listId}/cards/reorder`, {
-          method: "PATCH",
-          body: JSON.stringify({
-            cardId: draggedCard.id,
-            toPosition: position,
-          }),
-        });
+        if (draggedCardListId === listId) {
+          // Reorder within the same list
+          await apiFetch(`/boards/lists/${listId}/cards/reorder`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              cardId: draggedCard.id,
+              toPosition: position,
+            }),
+          });
+        } else {
+          // Move to different list with specific position using new endpoint
+          // For empty lists, ensure position is 1
+          const finalPosition = isListEmpty ? 1 : position;
+
+          await apiFetch(
+            `/boards/${boardId}/cards/${draggedCard.id}/move-and-reorder`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                toListId: listId,
+                toPosition: finalPosition,
+              }),
+            },
+          );
+        }
       } catch (error) {
-        console.error("API call failed");
-        throw error;
+        // Extract detailed error information
+        const apiError = error as any;
+        if (apiError?.body?.error) {
+          throw new Error(`Move failed: ${apiError.body.error}`);
+        } else if (apiError?.message) {
+          throw new Error(`Move failed: ${apiError.message}`);
+        } else {
+          throw new Error("Move failed: Unknown error occurred");
+        }
       }
 
       // Refresh the board to get updated positions
-
       await loadBoard();
     } catch (e: unknown) {
-      const error = e as { body?: { error?: string } };
-      setError(error?.body?.error || "Failed to reorder card");
+      const error = e as Error;
+      setError(error.message || "Failed to reorder card");
     } finally {
       setDraggedCard(null);
       setDraggedCardListId(null);
@@ -399,13 +481,18 @@ export default function BoardViewPage() {
     (listId: string, position: number, categorySection?: string): string => {
       if (!board) return "uncategorized";
 
-      // If we're in a specific category section, use that category
-      if (categorySection && categorySection !== "uncategorized") {
-        return categorySection;
-      }
-
       const list = board.lists.find((l) => l.id === listId);
       if (!list) return "uncategorized";
+
+      // For empty lists, use categorySection if provided, otherwise default to uncategorized
+      if (list.cards.length === 0) {
+        return categorySection || "uncategorized";
+      }
+
+      // If we're in a specific category section, use that category
+      if (categorySection) {
+        return categorySection;
+      }
 
       // Find the card that would be at this position
       // For position 1, it's the first card
@@ -428,6 +515,7 @@ export default function BoardViewPage() {
     setDraggedCard(null);
     setDraggedCardListId(null);
     setDraggedCardCategoryId(null);
+    setMaxListSizePerCategory(new Map());
   };
 
   if (!board) {
@@ -746,12 +834,30 @@ export default function BoardViewPage() {
                               handleDropZoneDrop(e, list.id, 1, "uncategorized")
                             }
                             draggedCard={draggedCard}
-                            draggedCardListId={draggedCardListId}
                             draggedCardCategoryId={draggedCardCategoryId}
                             getCategoryForListAndPosition={
                               getCategoryForListAndPosition
                             }
                             categorySection="uncategorized"
+                            isEmptyList={uncategorizedCards.length === 0}
+                            availableSpace={
+                              draggedCard &&
+                              maxListSizePerCategory.has("uncategorized")
+                                ? Math.max(
+                                    1,
+                                    uncategorizedCards.length === 0
+                                      ? maxListSizePerCategory.get(
+                                          "uncategorized",
+                                        )!
+                                      : Math.max(
+                                          1,
+                                          maxListSizePerCategory.get(
+                                            "uncategorized",
+                                          )! - uncategorizedCards.length,
+                                        ),
+                                  )
+                                : 1
+                            }
                           />
                           {uncategorizedCards.map((card, index) => (
                             <div key={card.id}>
@@ -786,7 +892,6 @@ export default function BoardViewPage() {
                                   )
                                 }
                                 draggedCard={draggedCard}
-                                draggedCardListId={draggedCardListId}
                                 draggedCardCategoryId={draggedCardCategoryId}
                                 getCategoryForListAndPosition={
                                   getCategoryForListAndPosition
@@ -849,12 +954,28 @@ export default function BoardViewPage() {
                             handleDropZoneDrop(e, list.id, 1, category.id)
                           }
                           draggedCard={draggedCard}
-                          draggedCardListId={draggedCardListId}
                           draggedCardCategoryId={draggedCardCategoryId}
                           getCategoryForListAndPosition={
                             getCategoryForListAndPosition
                           }
                           categorySection={category.id}
+                          isEmptyList={categoryCards.length === 0}
+                          availableSpace={
+                            draggedCard &&
+                            maxListSizePerCategory.has(category.id)
+                              ? Math.max(
+                                  1,
+                                  categoryCards.length === 0
+                                    ? maxListSizePerCategory.get(category.id)!
+                                    : Math.max(
+                                        1,
+                                        maxListSizePerCategory.get(
+                                          category.id,
+                                        )! - categoryCards.length,
+                                      ),
+                                )
+                              : 1
+                          }
                         />
                         {categoryCards.map((card, index) => (
                           <div key={card.id}>
@@ -887,12 +1008,29 @@ export default function BoardViewPage() {
                                 )
                               }
                               draggedCard={draggedCard}
-                              draggedCardListId={draggedCardListId}
                               draggedCardCategoryId={draggedCardCategoryId}
                               getCategoryForListAndPosition={
                                 getCategoryForListAndPosition
                               }
                               categorySection={category.id}
+                              availableSpace={
+                                draggedCard &&
+                                maxListSizePerCategory.has(category.id)
+                                  ? Math.max(
+                                      1,
+                                      categoryCards.length === 0
+                                        ? maxListSizePerCategory.get(
+                                            category.id,
+                                          )!
+                                        : Math.max(
+                                            1,
+                                            maxListSizePerCategory.get(
+                                              category.id,
+                                            )! - categoryCards.length,
+                                          ),
+                                    )
+                                  : 1
+                              }
                             />
                           </div>
                         ))}
