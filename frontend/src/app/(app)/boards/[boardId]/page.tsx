@@ -446,11 +446,30 @@ export default function BoardViewPage() {
         />
       )}
 
-      <div className="text-right mb-[30px]">
+      <div className="flex justify-between items-center mb-[30px]">
         <h1 className="text-2xl font-semibold">{board.title}</h1>
+        <div className="flex gap-[30px]">
+          {/* Add List Button */}
+          <button
+            onClick={() => setActiveListForm(!activeListForm)}
+            className={addButtonClasses}
+          >
+            + Add a list
+          </button>
 
-        {/* Create List Form */}
-        {activeListForm ? (
+          {/* Add Category Button */}
+          <button
+            onClick={() => setActiveCategoryForm(!activeCategoryForm)}
+            className={addButtonClasses}
+          >
+            + Add a category
+          </button>
+        </div>
+      </div>
+
+      {/* Create List Form */}
+      {activeListForm && (
+        <div className="mb-[30px] flex justify-end">
           <form onSubmit={createList} className="space-y-2">
             <input
               ref={(input) => {
@@ -477,17 +496,12 @@ export default function BoardViewPage() {
               </button>
             </div>
           </form>
-        ) : (
-          <button
-            onClick={() => setActiveListForm(true)}
-            className={addButtonClasses}
-          >
-            + Add a list
-          </button>
-        )}
+        </div>
+      )}
 
-        {/* Create Category Form */}
-        {activeCategoryForm ? (
+      {/* Create Category Form */}
+      {activeCategoryForm && (
+        <div className="mb-[30px] flex justify-end">
           <form onSubmit={createCategory} className="space-y-2">
             <input
               ref={(input) => {
@@ -518,15 +532,8 @@ export default function BoardViewPage() {
               </button>
             </div>
           </form>
-        ) : (
-          <button
-            onClick={() => setActiveCategoryForm(true)}
-            className={`${addButtonClasses} ml-[30px]`}
-          >
-            + Add a category
-          </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Lists and Cards - Vertical Category Grouping */}
       <div
