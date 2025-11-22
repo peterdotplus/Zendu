@@ -8,8 +8,6 @@
 
 - After registering, input the email into the login field, and autofocus the password (but don't autofill), also autofocus on verify page
 
-- Drag cards
-
 - Card modal with comments, assignments, description, and CRUD for those.
 
 
